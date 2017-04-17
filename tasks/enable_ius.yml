@@ -1,0 +1,44 @@
+---
+# Source: https://gist.github.com/chrishultin/d986c13772da1f5d7f6d2d6152b45c8c
+# On CentOS, epel-release is available in the default repositories. Therefore,
+# ius-release can just resolve the dependency automatically. On RHEL (or other
+# RHEL clones) you will need to explicitly install epel-release first. This
+# task can be moved to it's own play if you want to be able to require it
+# independently of the IUS state declaration.
+
+- name: install EPEL release package for RHEL
+  yum:
+    name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm"
+    state: latest
+  when: ansible_distribution == 'Red Hat Enterprise Linux'
+
+- set_fact:
+    ius_distribution_abbrev: "{{ (ansible_distribution == 'CentOS') | ternary('centos', 'rhel') }}"
+
+# Must be state: present due to deficiency in ansible. See:
+# https://github.com/ansible/ansible-modules-core/issues/948 
+- name: install IUS release package
+  yum:
+    name: "https://{{ ius_distribution_abbrev }}{{ ansible_distribution_major_version }}.iuscommunity.org/ius-release.rpm"
+    state: present
+  when: ansible_os_family == 'RedHat'
+  register: install_via_url
+  ignore_errors: yes
+
+- name: download IUS release package
+  get_url:
+    url: "https://{{ ius_distribution_abbrev }}{{ ansible_distribution_major_version }}.iuscommunity.org/ius-release.rpm"
+    dest: "/tmp/ius-release.rpm"
+    tmp_dest: '/tmp/'
+  when: install_via_url|failed
+  register: downloaded_package
+  ignore_errors: yes
+
+- name: install IUS release package (local)
+  yum:
+    name: "/tmp/ius-release.rpm"
+    state: present
+  when:
+    - install_via_url|failed
+    - downloaded_package.succeeded
+  ignore_errors: yes

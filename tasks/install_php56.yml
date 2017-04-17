@@ -1,0 +1,39 @@
+---
+# These tasks install the php 5.6 modules.
+
+- name: Install php
+  yum: name={{ item }} state=present
+  with_items:
+    - php56u
+    - php56u-cli
+    # Common and dev packages for php
+    - php56u-common
+    - php56u-devel
+    # Extra PHP modules that we find useful
+    - php56u-pecl-apcu
+    - php56u-pecl-memcache
+    - php56u-pecl-imagick
+    - php56u-mcrypt
+    - php56u-mysqlnd
+    - php56u-mbstring
+    - php56u-imap
+    # - php56u-curl
+    - php56u-pear
+    - php56u-gd
+    - php56u-pecl-mongo
+    # - php56u-sqlite
+    - php56u-pecl-jsonc
+    - php56u-pecl-gearman
+    # - php56u-readline
+    # - php56u-sasl
+    - php56u-xmlrpc
+    - php56u-xml
+    - php56u-pecl-geoip
+    - php56u-intl
+    # - php56u-pecl-oauth
+    - php56u-pspell
+
+- name: Install web role specific dependencies
+  yum: name={{ item }} state=installed
+  with_items:
+   - git
